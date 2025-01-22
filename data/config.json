@@ -1,0 +1,21 @@
+{
+  "ntp": {
+    "server": "pool.ntp.org",
+    "timezone": 7200,
+    "update_interval": 21600
+  },
+  "mqtt": {
+    "clientID": "WiMote",
+    "host": "mqtt.polmira.ru",
+    "port": 1883,
+    "user": "user",
+    "password": "pswd",
+    "base_topic": "user/"
+  },
+  "system": {
+    "json_size": 2048,
+    "logger_stack": 4096,
+    "wifi_stack": 4096,
+    "task_stack": 2048
+  }
+}
