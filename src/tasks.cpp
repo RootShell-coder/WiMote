@@ -150,8 +150,11 @@ void loggerTask(void *parameter)
       mqtt["status"] = "wifi disconnected";
     }
 
-    serializeJsonPretty(globalDoc, Serial);
-    Serial.println();
+    if (logConfig.enable_serial_logs)
+    {
+      serializeJsonPretty(globalDoc, Serial);
+      Serial.println();
+    }
   }
 }
 
@@ -159,7 +162,6 @@ void initTasks()
 {
   xTaskCreate(loggerTask, "Logger", config.system.logger_stack, NULL, 1, NULL);
   xTaskCreate(timeUpdateTask, "TimeUpdate", config.system.task_stack, NULL, 3, NULL);
-
   xTaskCreate(wifiTask, "WiFi", config.system.wifi_stack, NULL, 1, NULL);
   xTaskCreate(mqttTask, "MQTT", config.system.task_stack, NULL, 1, NULL);
 }

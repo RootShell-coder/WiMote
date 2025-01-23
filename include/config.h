@@ -2,6 +2,11 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
+struct JsonConfigLog
+{
+  bool enable_serial_logs = false;
+};
+
 struct Config
 {
   struct
@@ -32,12 +37,13 @@ struct Config
     int port;
     String user;
     String password;
-    String base_topic;
+    String base_topic; // Изменено с topic на base_topic
   } mqtt;
 };
 
 extern StaticJsonDocument<2048> globalDoc;
 extern Config config;
+extern JsonConfigLog logConfig;
 bool loadConfig();
 bool resetWiFiConfig();
 bool resetMQTTConfig();

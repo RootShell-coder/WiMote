@@ -180,24 +180,14 @@
     <div class="container">
       <div class="card">
         <h2>WiMote Configuration</h2>
-        <form id="configForm">
+        <form id="configForm"></form>
           <div class="section collapsed">
             <h3 onclick="toggleSection(this.parentElement)">WiFi Settings</h3>
             <div class="section-content collapsed">
               <label>SSID:</label>
-              <input
-                type="text"
-                name="wifi.ssid"
-                required
-                autocomplete="username"
-              />
+              <input type="text" name="wifi.ssid" required autocomplete="username" />
               <label>Password:</label>
-              <input
-                type="password"
-                name="wifi.password"
-                required
-                autocomplete="current-password"
-              />
+              <input type="password" name="wifi.password" required autocomplete="current-password" />
             </div>
           </div>
 
@@ -205,32 +195,17 @@
             <h3 onclick="toggleSection(this.parentElement)">MQTT Settings</h3>
             <div class="section-content collapsed">
               <label>Client ID:</label>
-              <input
-                type="text"
-                name="mqtt.clientID"
-                required
-                autocomplete="off"
-              />
+              <input type="text" name="mqtt.clientID" required autocomplete="off" />
               <label>Host:</label>
               <input type="text" name="mqtt.host" required autocomplete="off" />
               <label>Port:</label>
-              <input
-                type="number"
-                name="mqtt.port"
-                required
-                autocomplete="off"
-              />
+              <input type="number" name="mqtt.port" required autocomplete="off" />
               <label>Username:</label>
               <input type="text" name="mqtt.user" autocomplete="off" />
               <label>Password:</label>
               <input type="password" name="mqtt.password" autocomplete="off" />
               <label>Base Topic:</label>
-              <input
-                type="text"
-                name="mqtt.base_topic"
-                required
-                autocomplete="off"
-              />
+              <input type="text" name="mqtt.base_topic" required autocomplete="off" />
             </div>
           </div>
 
@@ -238,65 +213,49 @@
             <h3 onclick="toggleSection(this.parentElement)">NTP Settings</h3>
             <div class="section-content collapsed">
               <label>Server:</label>
-              <input
-                type="text"
-                name="ntp.server"
-                required
-                autocomplete="off"
-              />
+              <input type="text" name="ntp.server" required autocomplete="off" />
               <label>Timezone: (seconds)</label>
-              <input
-                type="number"
-                name="ntp.timezone"
-                required
-                autocomplete="off"
-              />
+              <input type="number" name="ntp.timezone" required autocomplete="off" />
               <label>Update Interval (seconds):</label>
-              <input
-                type="number"
-                name="ntp.update_interval"
-                required
-                autocomplete="off"
-              />
+              <input type="number" name="ntp.update_interval" required autocomplete="off" />
             </div>
           </div>
 
           <div class="button-container">
             <button type="submit">Save Configuration</button>
-            <button
-              type="button"
-              class="reset-button"
-              onclick="resetWiFiConfig()"
-            >
-              Reset WiFi
-            </button>
+            <button type="button" class="reset-button" onclick="resetWiFiConfig()">Reset WiFi</button>
           </div>
         </form>
         <div id="status" class="status"></div>
       </div>
 
+      <!-- Добавляем блок системной информации -->
       <div class="card system-info">
         <h3>System Status</h3>
-        <div class="info-grid" id="systemInfo"></div>
+        <div class="info-grid" id="systemInfo">
+          <!-- Сюда будет добавляться информация -->
+        </div>
       </div>
     </div>
 
     <script>
+      // Функция загрузки конфигурации с принудительным обновлением из сервера
       async function loadConfig(forceReload = false) {
         try {
-          const response = await fetch(
-            "/config.json?" + (forceReload ? Date.now() : "")
-          );
+          const response = await fetch("/config.json?" + (forceReload ? Date.now() : ""));
           const config = await response.json();
 
+          // Меняем порядок - mqtt делаем последним
           for (const section of ["wifi", "ntp", "mqtt"]) {
             if (!config[section]) continue;
 
+            // Ищем все поля с именем вида section.key
             const inputs = document.querySelectorAll(`[name^="${section}."]`);
             inputs.forEach((input) => {
               const field = input.name.split(".")[1];
               if (config[section].hasOwnProperty(field)) {
                 input.value = config[section][field];
+                // Небольшой визуальный эффект
                 input.style.backgroundColor = "#f0f8ff";
                 setTimeout(() => {
                   input.style.backgroundColor = "";
@@ -315,6 +274,7 @@
         }
       }
 
+      // Обработка отправки формы
       document.getElementById("configForm").onsubmit = async (e) => {
         e.preventDefault();
         const status = document.getElementById("status");
@@ -325,47 +285,42 @@
         const config = {
           wifi: {},
           ntp: {},
-          mqtt: {},
+          mqtt: {} // Добавляем секцию MQTT
         };
 
         formData.forEach((value, key) => {
           const [section, field] = key.split(".");
           config[section][field] =
-            field.includes("timezone") ||
-            field.includes("interval") ||
-            field.includes("port")
+            field.includes("timezone") || field.includes("interval") || field.includes("port")
               ? parseInt(value)
               : value;
         });
 
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 секунд таймаут
 
           const response = await fetch("/config", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "Cache-Control": "no-cache",
+              "Cache-Control": "no-cache"
             },
             body: JSON.stringify(config),
-            signal: controller.signal,
+            signal: controller.signal
           });
 
           clearTimeout(timeoutId);
 
           if (!response.ok) {
-            const errorText = await response
-              .text()
-              .catch(() => "Unknown error");
-            throw new Error(
-              `HTTP error! status: ${response.status}, message: ${errorText}`
-            );
+            const errorText = await response.text().catch(() => "Unknown error");
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
           }
 
           status.className = "status success";
           status.textContent = "Configuration saved successfully";
 
+          // Подождем немного дольше перед обновлением конфигурации
           setTimeout(async () => {
             try {
               await loadConfig(true);
@@ -382,6 +337,7 @@
           status.className = "status error";
           status.textContent = error.message || "Failed to save configuration";
 
+          // Оставим сообщение об ошибке на более длительное время
           setTimeout(() => {
             status.className = "";
             status.textContent = "";
@@ -389,8 +345,10 @@
         }
       };
 
+      // Начальная загрузка конфигурации
       loadConfig();
 
+      // Функция обновления системной информации
       let isOnline = true;
 
       function updateSystemInfo() {
@@ -401,7 +359,7 @@
             }
             if (!isOnline) {
               isOnline = true;
-              document.querySelector(".system-info").style.opacity = "1";
+              document.querySelector('.system-info').style.opacity = '1';
             }
             return response.json();
           })
@@ -409,6 +367,7 @@
             const systemInfo = document.getElementById("systemInfo");
             systemInfo.innerHTML = "";
 
+            // Форматирование времени
             function formatUptime(seconds) {
               const hrs = Math.floor(seconds / 3600);
               const mins = Math.floor((seconds % 3600) / 60);
@@ -416,6 +375,7 @@
               return `${hrs}h ${mins}m ${secs}s`;
             }
 
+            // Функция для создания элемента информации
             function createInfoItem(label, value) {
               return `
                             <div class="info-item">
@@ -425,6 +385,7 @@
                         `;
             }
 
+            // WiFi информация
             if (data.wifi) {
               systemInfo.innerHTML += createInfoItem(
                 "WiFi Status",
@@ -438,7 +399,9 @@
               systemInfo.innerHTML += createInfoItem("IP", data.wifi.ip);
             }
 
+            // Время
             if (data.time) {
+              // Изменено с data.timeInfo на data.time
               const epoch = data.time.epoch;
               let timeDisplay = epoch;
               if (typeof epoch === "number" && epoch > 0) {
@@ -460,6 +423,7 @@
               );
             }
 
+            // Системная информация
             if (data.system) {
               systemInfo.innerHTML += createInfoItem(
                 "Heap Free",
@@ -471,47 +435,39 @@
               );
             }
 
+            // MQTT информация
             if (data.mqtt) {
-              systemInfo.innerHTML += createInfoItem(
-                "MQTT Status",
-                data.mqtt.status
-              );
+              systemInfo.innerHTML += createInfoItem("MQTT Status", data.mqtt.status);
               if (data.mqtt.state >= 0) {
-                systemInfo.innerHTML += createInfoItem(
-                  "MQTT Client",
-                  data.mqtt.client_id
-                );
-                systemInfo.innerHTML += createInfoItem(
-                  "MQTT Host",
-                  data.mqtt.broker
-                );
+                systemInfo.innerHTML += createInfoItem("MQTT Client", data.mqtt.client_id);
+                systemInfo.innerHTML += createInfoItem("MQTT Host", data.mqtt.broker);
               }
             }
+
           })
           .catch((error) => {
             console.error("Error fetching status:", error);
             if (isOnline) {
               isOnline = false;
               const systemInfo = document.getElementById("systemInfo");
-              systemInfo.innerHTML = createInfoItem(
-                "Status",
-                "Connection lost"
-              );
-              document.querySelector(".system-info").style.opacity = "0.5";
+              systemInfo.innerHTML = createInfoItem("Status", "Connection lost");
+              document.querySelector('.system-info').style.opacity = '0.5';
             }
           });
       }
 
+      // Обновляем информацию каждую секунду
       updateSystemInfo();
       setInterval(() => {
         if (!isOnline) {
           console.log("Attempting to reconnect...");
         }
         updateSystemInfo();
-      }, 2000);
+      }, 2000); // Увеличим интервал до 2 секунд
 
+      // Добавить функцию форматирования timestamp
       function formatTimestamp(epoch) {
-        const date = new Date(epoch * 1000);
+        const date = new Date(epoch * 1000); // Предполагается, что epoch в секундах
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const dd = String(date.getDate()).padStart(2, "0");
@@ -521,12 +477,14 @@
         return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
       }
 
+      // Добавляем функцию сворачивания/разворачивания секций
       function toggleSection(section) {
-        section.classList.toggle("collapsed");
-        const content = section.querySelector(".section-content");
-        content.classList.toggle("collapsed");
+        section.classList.toggle('collapsed');
+        const content = section.querySelector('.section-content');
+        content.classList.toggle('collapsed');
       }
 
+      // Добавить функцию сброса WiFi конфигурации
       async function resetWiFiConfig() {
         if (!confirm("This will reset WiFi settings. Continue?")) {
           return;
@@ -540,8 +498,8 @@
           const response = await fetch("/config/reset-wifi", {
             method: "POST",
             headers: {
-              "Cache-Control": "no-cache",
-            },
+              "Cache-Control": "no-cache"
+            }
           });
 
           if (!response.ok) {
@@ -549,15 +507,15 @@
           }
 
           status.className = "status success";
-          status.textContent =
-            "WiFi configuration reset successful. Connect to AP to configure.";
+          status.textContent = "WiFi configuration reset successful. Connect to AP to configure.";
 
+          // Обновляем конфигурацию
           await loadConfig(true);
+
         } catch (error) {
           console.error("Reset error:", error);
           status.className = "status error";
-          status.textContent =
-            "Failed to reset WiFi configuration: " + error.message;
+          status.textContent = "Failed to reset WiFi configuration: " + error.message;
         }
       }
 
@@ -574,8 +532,8 @@
           const response = await fetch("/config/reset-mqtt", {
             method: "POST",
             headers: {
-              "Cache-Control": "no-cache",
-            },
+              "Cache-Control": "no-cache"
+            }
           });
 
           if (!response.ok) {
@@ -585,11 +543,11 @@
           status.className = "status success";
           status.textContent = "MQTT configuration reset successful";
           await loadConfig(true);
+
         } catch (error) {
           console.error("Reset error:", error);
           status.className = "status error";
-          status.textContent =
-            "Failed to reset MQTT configuration: " + error.message;
+          status.textContent = "Failed to reset MQTT configuration: " + error.message;
         }
       }
 
@@ -597,6 +555,7 @@
         if (!confirm("This will reset NTP settings. Continue?")) {
           return;
         }
+
 
         const status = document.getElementById("status");
         status.className = "status";
@@ -606,8 +565,8 @@
           const response = await fetch("/config/reset-ntp", {
             method: "POST",
             headers: {
-              "Cache-Control": "no-cache",
-            },
+              "Cache-Control": "no-cache"
+            }
           });
 
           if (!response.ok) {
@@ -617,20 +576,16 @@
           status.className = "status success";
           status.textContent = "NTP configuration reset successful";
           await loadConfig(true);
+
         } catch (error) {
           console.error("Reset error:", error);
           status.className = "status error";
-          status.textContent =
-            "Failed to reset NTP configuration: " + error.message;
+          status.textContent = "Failed to reset NTP configuration: " + error.message;
         }
       }
 
       async function resetAllConfig() {
-        if (
-          !confirm(
-            "This will reset ALL settings. Device will restart. Continue?"
-          )
-        ) {
+        if (!confirm("This will reset ALL settings. Device will restart. Continue?")) {
           return;
         }
 
@@ -642,8 +597,8 @@
           const response = await fetch("/config/reset-all", {
             method: "POST",
             headers: {
-              "Cache-Control": "no-cache",
-            },
+              "Cache-Control": "no-cache"
+            }
           });
 
           if (!response.ok) {
@@ -651,13 +606,12 @@
           }
 
           status.className = "status success";
-          status.textContent =
-            "All configuration reset successful. Device will restart...";
+          status.textContent = "All configuration reset successful. Device will restart...";
+
         } catch (error) {
           console.error("Reset error:", error);
           status.className = "status error";
-          status.textContent =
-            "Failed to reset configuration: " + error.message;
+          status.textContent = "Failed to reset configuration: " + error.message;
         }
       }
     </script>
