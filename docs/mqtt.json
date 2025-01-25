@@ -1,0 +1,26 @@
+{
+  "WiMote_IR": {
+    "status": "$state",
+    "system": {
+      "heap_free": "$heap_free",
+      "heap_size": "$heap_size",
+      "cpu_freq_mhz": "$cpu_freq_mhz",
+      "sdk_version": "$sdk_version",
+      "flash_size": "$flash_size",
+      "client_id": "$client_id",
+      "uptime": "$uptime"
+    },
+    "wifi": {
+      "status": "$wifi_status",
+      "ssid": "$wifi_ssid",
+      "last_update": "$wifi_last_update",
+      "ip": "$wifi_ip",
+      "rssi": "$wifi_rssi",
+      "channel": "$wifi_channel"
+    },
+    "ir": {
+      "received": "$ir_received",
+      "transmitted": "$ir_transmitted"
+    }
+  }
+}

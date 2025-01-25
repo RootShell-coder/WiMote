@@ -1,13 +1,9 @@
-# WiMote_IR
+# WiMote_IR IR2MQTT/MQTT2IR
 
-<base_topic>/<client_id>/ir/transmitted
+Remote Control with Maximum Features
 
-```json
-{
-  "protocol": "NEC",
-  "code": "0x20DFE01F",
-  "bits": 32
-}
-```
+![alt text](<screen/IR Remote Control.png>)
 
-`pio run --target uploadfs`
+[mqtt schema](docs/mqtt.json)
+
+[api swagger](docs/api.yml)
