@@ -37,6 +37,7 @@ bool loadConfig() {
     if(wifi) {
         config.wifi.ssid = wifi["ssid"] | config.wifi.ssid;
         config.wifi.password = wifi["password"] | config.wifi.password;
+        config.wifi.hostname = wifi["hostname"] | config.wifi.hostname;  // Добавляем загрузку hostname
     }
 
     JsonObject ntp = doc["ntp"];
@@ -64,7 +65,6 @@ bool loadConfig() {
         config.mqtt.password = mqtt["password"] | config.mqtt.password;
         config.mqtt.base_topic = mqtt["base_topic"] | config.mqtt.base_topic;
 
-        // Проверка, действительно ли host загружен
         if(config.mqtt.host.isEmpty()) {
             Serial.println("Error: MQTT host is empty. Check config.json.");
             return false;
@@ -80,7 +80,6 @@ bool loadConfig() {
 bool resetWiFiConfig() {
     StaticJsonDocument<1024> doc;
 
-    // Читаем текущую конфигурацию
     File file = SPIFFS.open("/config.json", "r");
     if(file) {
         DeserializationError error = deserializeJson(doc, file);
@@ -88,10 +87,8 @@ bool resetWiFiConfig() {
         if(error) return false;
     }
 
-    // Удаляем секцию wifi если она есть
     doc.remove("wifi");
 
-    // Сохраняем обновленную конфигурацию
     file = SPIFFS.open("/config.json", "w");
     if(!file) return false;
 

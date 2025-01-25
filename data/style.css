@@ -1,0 +1,886 @@
+/* В начало файла добавляем определение шрифта */
+@font-face {
+    font-family: 'Font Awesome 5 Free';
+    font-style: normal;
+    font-weight: 900;
+    src: url('fa-solid-900.woff2') format('woff2');
+    font-display: swap; /* Добавили стратегию отображения шрифта */
+}
+
+/* Добавляем класс для иконок */
+.fas {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+}
+
+:root {
+    --primary-color: #00b0ff;
+    --secondary-color: #1e1e1e;
+    --error-color: #ff5252;
+    --success-color: #69f0ae;
+    --text-color: #ffffff;
+    --border-radius: 6px;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --background-color: #121212;
+    --button-color: #1e1e1e;
+    --button-active: #2196f3;
+    --card-color: #1e1e1e;
+    --input-background: #2d2d2d;
+    --input-border: #404040;
+    --hover-color: #2196f3;
+    --status-background: rgba(0, 176, 255, 0.1);
+    --status-success: rgba(105, 240, 174, 0.1);
+    --status-error: rgba(255, 82, 82, 0.1);
+}
+
+/* Base styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--background-color);
+    color: var(--text-color);
+    padding: 15px;
+}
+
+/* Layout components */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.card {
+    background: var(--secondary-color);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+}
+
+.card h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Button styles */
+.button-base {
+    background: var(--button-color);
+    color: var(--text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remote-button {
+    background: linear-gradient(145deg, var(--button-color), #252525);
+    color: var(--primary-color); /* Делаем текст синим по умолчанию */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    user-select: none;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.remote-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0) 50%
+    );
+    transform: rotate(-45deg);
+    transition: all 0.3s ease;
+}
+
+.remote-button:hover::before {
+    left: 0;
+}
+
+.remote-button:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 176, 255, 0.2);
+}
+
+.remote-button:active {
+    background: linear-gradient(145deg, #252525, var(--button-color));
+    transform: scale(0.95) translateY(1px);
+    border-color: var(--primary-color);
+    box-shadow:
+        0 0 5px rgba(0, 176, 255, 0.3),
+        inset 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.remote-button.power {
+    background: linear-gradient(145deg, #ff5252, #ff4444);
+    color: var(--text-color); /* Возвращаем белый цвет для кнопки power */
+}
+
+/* Обновляем общие стили для всех кнопок */
+.remote-button,
+.button-group button,
+#configForm .button-container button,
+.modal .button-group button {
+    background: linear-gradient(145deg, var(--button-color), #252525);
+    color: var(--primary-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Эффект свечения при наведении для всех кнопок */
+.remote-button:hover,
+.button-group button:hover,
+#configForm .button-container button:hover,
+.modal .button-group button:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 176, 255, 0.2);
+}
+
+/* Эффект нажатия для всех кнопок */
+.remote-button:active,
+.button-group button:active,
+#configForm .button-container button:active,
+.modal .button-group button:active {
+    background: linear-gradient(145deg, #252525, var(--button-color));
+    transform: scale(0.98);
+    box-shadow:
+        0 0 5px rgba(0, 176, 255, 0.3),
+        inset 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для опасных действий (красные кнопки) */
+.remote-button.power,
+.reset-button,
+.delete-btn,
+.modal .button-group .danger-button {
+    background: linear-gradient(145deg, var(--error-color), #ff4444);
+    color: var(--text-color);
+}
+
+/* Эффекты для красных кнопок */
+.remote-button.power:hover,
+.reset-button:hover,
+.delete-btn:hover,
+.modal .button-group .danger-button:hover {
+    border-color: var(--error-color);
+    box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2);
+}
+
+.remote-button.power:active,
+.reset-button:active,
+.delete-btn:active,
+.modal .button-group .danger-button:active {
+    background: linear-gradient(145deg, #ff4444, var(--error-color));
+    transform: scale(0.98);
+    box-shadow:
+        0 0 5px rgba(255, 82, 82, 0.3),
+        inset 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Эффект блика для всех кнопок */
+.remote-button::before,
+.button-group button::before,
+#configForm .button-container button::before,
+.modal .button-group button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0) 50%
+    );
+    transform: rotate(-45deg);
+    transition: all 0.3s ease;
+}
+
+.remote-button:hover::before,
+.button-group button:hover::before,
+#configForm .button-container button:hover::before,
+.modal .button-group button:hover::before {
+    left: 0;
+}
+
+/* Скрываем стрелки для числовых полей */
+input[type="number"] {
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Status styles */
+.status {
+    text-align: center;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    background: var(--status-background);
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.status.visible {
+    display: block;
+    opacity: 1;
+}
+
+.status.success {
+    background: var(--status-success);
+    color: var (--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.status.error {
+    background: var(--status-error);
+    color: var(--error-color);
+    border: 1px solid var(--error-color);
+}
+
+/* Grid layouts */
+.grid-base {
+    display: grid;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+/* Button grid layouts */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.channel-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 10px 0 40px 0;
+}
+
+.control-section {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.control-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.remote {
+    background: linear-gradient(145deg, #232323, #1a1a1a);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow:
+        0 2px 15px rgba(0, 0, 0, 0.5),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    max-width: 400px;  /* Добавлено ограничение ширины самого пульта */
+    margin: 0 auto;    /* Центрирование пульта в контейнере */
+}
+
+.remote::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0) 60%
+    );
+    transform: rotate(-5deg);
+    pointer-events: none;
+}
+
+/* Добавляем стиль для заголовка */
+.remote-title {
+    color: var(--primary-color);
+    font-style: italic;
+    font-weight: bold;
+    text-align: right;
+    margin: 20px 10px;  /* Добавлен отступ справа */
+    font-size: 1.2em;
+    opacity: 0.8;
+    text-shadow:
+        -1px -1px 0 rgba(0, 0, 0, 0.7),   /* Тень сверху и слева */
+        1px 1px 2px rgba(255, 255, 255, 0.2);  /* Свет снизу и справа */
+    letter-spacing: 1px;  /* Небольшой интервал между буквами */
+}
+
+/* Config specific styles */
+.section {
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    background: var(--secondary-color);
+}
+
+.section-content {
+    max-height: 800px;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.section-content.collapsed {
+    max-height: 0;
+}
+
+/* IR Editor specific styles */
+.commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.command-item {
+    background: var(--button-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--input-border);
+}
+
+.command-item header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.command-item input {
+    margin-bottom: 0.5rem;
+}
+
+.learn-button {
+    background: var(--success-color);
+}
+
+.learn-button.learning {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Command Editor Styles */
+.command-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background: var(--secondary-color);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--input-border);
+}
+
+.command-details {
+    display: grid;
+    gap: 10px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 0.9em;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.input-group input {
+    padding: 8px;
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.delete-btn {
+    background: var(--error-color);
+}
+
+.edit-btn {
+    background: var(--primary-color);
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--secondary-color);
+    padding: 20px;
+    border-radius: var(--border-radius);
+
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.modal .button-group {
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.modal .button-group button {
+    min-width: 100px;
+    padding: 8px 16px;
+}
+
+.command-info {
+    background: var(--input-background);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    border: 1px solid var(--input-border);
+}
+
+.modal select {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    color: var (--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.modal select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.modal select option {
+    background: var(--secondary-color);
+    color: var(--text-color);
+}
+
+/* Обновляем стили для модального окна */
+.modal input[type="text"],
+.modal select {
+    color: var(--text-color);
+    width: 100%;
+    padding: 0.8rem;
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.modal input[type="text"]:focus,
+.modal select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.modal select option {
+    background: var(--secondary-color);
+    color: var(--text-color);
+    padding: 8px;
+}
+
+/* Responsive styles */
+@media (max-width: 320px) {
+    .remote-button {
+        font-size: 1em;
+        padding: 10px;
+        min-height: 50px;
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: 800px;  /* Соответствует ширине страницы конфигурации */
+    }
+    .remote {
+        max-width: 500px;  /* Увеличиваем ширину пульта на больших экранах */
+    }
+    .remote-button {
+        min-height: 80px;
+        font-size: 1.4em;
+    }
+}
+
+/* Platform specific styles */
+@supports (-webkit-touch-callout: none) {
+    .remote-button {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* IR Editor header styles */
+.editor-header h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* IR Editor specific styles */
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.editor-header h2 {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.button-container {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.button-container .remote-button {
+    min-height: 40px;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    white-space: nowrap; /* Предотвращаем перенос текста */
+}
+
+.button-container .learn-button {
+    min-width: 200px; /* Фиксированная минимальная ширина для кнопки обучения */
+}
+
+.learn-button {
+    background: linear-gradient(145deg, var(--success-color), #4caf50);
+    color: var(--text-color) !important;
+}
+
+.learn-button:hover {
+    background: linear-gradient(145deg, #4caf50, var(--success-color));
+}
+
+.learn-button i {
+    margin-right: 0.5rem;
+}
+
+.section {
+    background: var(--secondary-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.commands-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.command-item {
+    background: linear-gradient(145deg, var(--button-color), #252525);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.command-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 176, 255, 0.1);
+}
+
+.command-item header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--input-border);
+}
+
+.command-name {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.button-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.button-group button {
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.edit-btn {
+    background: var(--primary-color);
+}
+
+.delete-btn {
+    background: var(--error-color);
+}
+
+.command-details {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 0.9rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+/* Config Page Styles */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+}
+
+.info-item {
+    padding: 0.5rem;
+    background: var(--input-background);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--input-border);
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.info-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+/* Config Page Specific Styles */
+.section {
+    background: linear-gradient(145deg, var(--secondary-color), #252525);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.section h3 {
+    color: var(--primary-color);
+    padding: 1rem;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+
+.section h3::after {
+    content: '\f107';  /* FontAwesome chevron-down */
+    font-family: 'Font Awesome 5 Free';
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.section.collapsed h3::after {
+    transform: rotate(-90deg);
+}
+
+.section-content {
+    padding: 1rem;
+    border-top: 1px solid var(--input-border);
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+.section-content label {
+    display: block;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.section-content input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    background: var(--input-background);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.section-content input:focus {
+    border-color: var(--primary-color);
+}
+
+/* Стили для кнопок в форме конфигурации */
+#configForm .button-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+#configForm .button-container button {
+    background: linear-gradient(145deg, var(--button-color), #252525);
+    color: var(--primary-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+}
+
+#configForm .button-container button:hover {
+    border-color: var(--primary-color);
+
+    box-shadow: 0 2px 5px rgba(0, 176, 255, 0.2);
+}
+
+#configForm .button-container button:active {
+    background: linear-gradient(145deg, #252525, var(--button-color));
+    transform: scale(0.98);
+}
+
+#configForm .button-container .reset-button {
+    background: linear-gradient(145deg, var(--error-color), #ff4444);
+    color: var(--text-color);
+}
+
+#configForm .button-container .reset-button:hover {
+    border-color: var(--error-color);
+    box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2);
+}
+
+/* Добавляем стиль для кнопки опасного действия в модальном окне */
+.modal .button-group .danger-button {
+    background: linear-gradient(145deg, var(--error-color), #ff4444);
+    color: var(--text-color);
+    border-color: var(--error-color);
+}
+
+.modal .button-group .danger-button:hover {
+    background: linear-gradient(145deg, #ff4444, var(--error-color));
+    box-shadow: 0 2px 5px rgba(255, 82, 82, 0.2);
+}
+
+/* Стиль для полей с паролем */
+.password-field {
+    -webkit-text-security: disc;
+    -moz-text-security: disc;
+    text-security: disc;
+}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IR Commands Editor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preload" href="fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <header class="editor-header">
+                <h2><i class="fas fa-tools"></i> IR Commands Editor</h2>
+                <div class="button-container">
+                    <button class="remote-button" onclick="showManualAddDialog()">
+                        Manual Add
+                    </button>
+                    <button class="remote-button learn-button" onclick="startLearning()">
+                        <i class="fas fa-broadcast-tower"></i> Learn New Command
+                    </button>
+                </div>
+            </header>
+
+            <div class="section">
+                <div id="commands-list" class="commands-grid">
+                    <!-- Commands will be loaded here -->
+                </div>
+            </div>
+
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <script src="ir_editor.js"></script>
+</body>
+</html>

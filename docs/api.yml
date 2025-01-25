@@ -1,0 +1,262 @@
+openapi: 3.0.0
+info:
+  title: WiMote API
+  version: 1.0.0
+  description: API for controlling IR device and configuring system settings
+
+servers:
+  - url: http://{deviceIP}
+    variables:
+      deviceIP:
+        default: 192.168.4.1
+        description: Device IP address
+
+tags:
+  - name: System
+    description: System-related operations
+  - name: IR
+    description: IR control operations
+  - name: Config
+    description: Configuration operations
+  - name: WiFi
+    description: WiFi-related operations
+  - name: MQTT
+    description: MQTT-related operations
+
+paths:
+  /status:
+    get:
+      tags: [System]
+      summary: Get system status
+      description: Returns current system status including WiFi, MQTT, time and system info
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStatus'
+
+  /config:
+    get:
+      tags: [Config]
+      summary: Get configuration page
+      responses:
+        '200':
+          description: Configuration page HTML
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      tags: [Config]
+      summary: Update configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationRequest'
+      responses:
+        '200':
+          description: Configuration updated successfully
+        '400':
+          description: Invalid configuration data
+        '500':
+          description: Failed to save configuration
+
+  /config/reset-wifi:
+    post:
+      tags: [WiFi]
+      summary: Reset WiFi configuration
+      responses:
+        '200':
+          description: WiFi configuration reset successfully
+        '500':
+          description: Failed to reset WiFi configuration
+
+  /config/reset-mqtt:
+    post:
+      tags: [MQTT]
+      summary: Reset MQTT configuration
+      responses:
+        '200':
+          description: MQTT configuration reset successfully
+        '500':
+          description: Failed to reset MQTT configuration
+
+  /ir/send:
+    post:
+      tags: [IR]
+      summary: Send IR command
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IRCommand'
+      responses:
+        '200':
+          description: Command sent successfully
+        '400':
+          description: Invalid command format
+        '500':
+          description: Failed to send command
+
+  /ir/learn:
+    post:
+      tags: [IR]
+      summary: Start IR learning mode
+      responses:
+        '200':
+          description: Learning mode started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningResponse'
+        '409':
+          description: Already in learning mode
+        '500':
+          description: Failed to start learning mode
+
+components:
+  schemas:
+    SystemStatus:
+      type: object
+      properties:
+        system:
+          type: object
+          properties:
+            heap_free:
+              type: integer
+              example: 131072
+            heap_size:
+              type: integer
+              example: 262144
+            cpu_freq_mhz:
+              type: integer
+              example: 240
+            sdk_version:
+              type: string
+              example: "v4.4.0"
+            flash_size:
+              type: integer
+              example: 4194304
+        wifi:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [connected, disconnected, initializing]
+            ssid:
+              type: string
+            ip:
+              type: string
+            rssi:
+              type: integer
+            channel:
+              type: integer
+        mqtt:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [connected, disconnected, connecting]
+            broker:
+              type: string
+            port:
+              type: integer
+            client_id:
+              type: string
+        time:
+          type: object
+          properties:
+            synchronized:
+              type: boolean
+            epoch:
+              type: integer
+            uptime:
+              type: integer
+
+    ConfigurationRequest:
+      type: object
+      properties:
+        wifi:
+          type: object
+          properties:
+            ssid:
+              type: string
+            password:
+              type: string
+        mqtt:
+          type: object
+          properties:
+            host:
+              type: string
+            port:
+              type: integer
+            user:
+              type: string
+            password:
+              type: string
+            client_id:
+              type: string
+            base_topic:
+              type: string
+        ntp:
+          type: object
+          properties:
+            server:
+              type: string
+            timezone:
+              type: integer
+            update_interval:
+              type: integer
+
+    IRCommand:
+      type: object
+      properties:
+        protocol:
+          type: string
+          example: "NEC"
+        code:
+          type: string
+          example: "0x20DF10EF"
+        bits:
+          type: integer
+          example: 32
+        raw:
+          type: array
+          items:
+            type: integer
+          description: Raw IR timing data for unknown protocols
+
+    LearningResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [learning, completed, error]
+        data:
+          $ref: '#/components/schemas/IRCommand'
+        error:
+          type: string
+
+    IRReceived:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+        protocol:
+          type: string
+        code:
+          type: string
+        bits:
+          type: integer
+        raw:
+          type: array
+          items:
+            type: integer
+
+security:
+  - {}  # No security for now, but can be added later

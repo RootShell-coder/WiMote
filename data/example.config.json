@@ -5,7 +5,7 @@
     "update_interval": 21600
   },
   "mqtt": {
-    "clientID": "WiMote",
+    "clientID": "WiMote_IR",
     "host": "mqtt.polmira.ru",
     "port": 1883,
     "user": "user",
@@ -14,8 +14,9 @@
   },
   "system": {
     "json_size": 2048,
-    "logger_stack": 4096,
-    "wifi_stack": 4096,
-    "task_stack": 2048
+    "logger_stack": 8192,
+    "wifi_stack": 8192,
+    "task_stack": 8192,
+    "ir_stack": 4096
   }
 }

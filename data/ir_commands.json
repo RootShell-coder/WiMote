@@ -1,0 +1,8 @@
+{
+  "buttons": {},
+  "defaults": {
+    "protocol": "NEC",
+    "bits": 32,
+    "repeat": 0
+  }
+}
