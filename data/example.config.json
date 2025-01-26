@@ -18,5 +18,12 @@
     "wifi_stack": 8192,
     "task_stack": 8192,
     "ir_stack": 4096
+  },
+  "ir": {
+    "enabled": true,
+    "tx_pin": 4,
+    "rx_pin": 5,
+    "commands_file": "/ir_commands.json",
+    "learn_timeout": 10
   }
 }

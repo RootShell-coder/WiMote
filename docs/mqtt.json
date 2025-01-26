@@ -1,26 +1,91 @@
 {
-  "WiMote_IR": {
-    "status": "$state",
-    "system": {
-      "heap_free": "$heap_free",
-      "heap_size": "$heap_size",
-      "cpu_freq_mhz": "$cpu_freq_mhz",
-      "sdk_version": "$sdk_version",
-      "flash_size": "$flash_size",
-      "client_id": "$client_id",
-      "uptime": "$uptime"
-    },
-    "wifi": {
-      "status": "$wifi_status",
-      "ssid": "$wifi_ssid",
-      "last_update": "$wifi_last_update",
-      "ip": "$wifi_ip",
-      "rssi": "$wifi_rssi",
-      "channel": "$wifi_channel"
-    },
-    "ir": {
-      "received": "$ir_received",
-      "transmitted": "$ir_transmitted"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "WiMote_IR": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "system": {
+          "type": "object",
+          "properties": {
+            "heap_free": {
+              "type": "string"
+            },
+            "heap_size": {
+              "type": "string"
+            },
+            "cpu_freq_mhz": {
+              "type": "string"
+            },
+            "sdk_version": {
+              "type": "string"
+            },
+            "flash_size": {
+              "type": "string"
+            },
+            "client_id": {
+              "type": "string"
+            },
+            "uptime": {
+              "type": "string"
+            }
+          },
+          "required": ["heap_free", "heap_size", "cpu_freq_mhz", "sdk_version", "flash_size", "client_id", "uptime"]
+        },
+        "wifi": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "ssid": {
+              "type": "string"
+            },
+            "last_update": {
+              "type": "string"
+            },
+            "ip": {
+              "type": "string"
+            },
+            "rssi": {
+              "type": "string"
+            },
+            "channel": {
+              "type": "string"
+            }
+          },
+          "required": ["status", "ssid", "last_update", "ip", "rssi", "channel"]
+        },
+        "ir": {
+          "type": "object",
+          "properties": {
+            "received": {
+              "type": "string"
+            },
+            "transmitted": {
+              "type": "object",
+              "properties": {
+                "transmitted": {
+                  "type": "string"
+                },
+                "set": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                }
+              },
+              "required": ["transmitted", "set", "format"]
+            }
+          },
+          "required": ["received", "transmitted"]
+        }
+      },
+      "required": ["status", "system", "wifi", "ir"]
     }
-  }
+  },
+  "required": ["WiMote_IR"]
 }

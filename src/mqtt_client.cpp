@@ -5,6 +5,7 @@
 #include "config.h"
 #include "ir.h"
 #include <queue>
+#include <ArduinoJson.h>
 
 MQTTManager mqttManager;
 
@@ -22,21 +23,35 @@ void MQTTManager::setupCallbacks() {
 
     client.setCallback([](char* topic, byte* payload, unsigned int length) {
         String topicStr = String(topic);
+        String expectedSetTopic = mqttManager.getFullTopic("ir/transmitted/set");
         String expectedTopic = mqttManager.getFullTopic("ir/transmitted");
 
-        if (topicStr == expectedTopic) {
-            // Пропускаем первое сообщение после подключения (retained)
+        if (topicStr == expectedSetTopic) {
             if (firstConnect) {
                 firstConnect = false;
                 return;
             }
 
-            char message[length + 1];
-            memcpy(message, payload, length);
-            message[length] = '\0';
+            // Сохраняем оригинальное сообщение
+            String originalMessage;
+            for(unsigned int i = 0; i < length; i++) {
+                originalMessage += (char)payload[i];
+            }
 
-            Serial.printf("Received IR command: %s\n", message);
-            irManager.transmit(message);
+            // Пропускаем пустые сообщения
+            if (originalMessage.length() == 0) {
+                return;
+            }
+
+            // Очищаем retained сообщение в топике set
+            mqttManager.publish("ir/transmitted/set", "", true);
+
+            // Отправляем IR команду
+            Serial.printf("Transmitting IR command: %s\n", originalMessage.c_str());
+            irManager.transmit(originalMessage.c_str());
+
+            // Публикуем оригинальное сообщение в ir/transmitted
+            mqttManager.publish("ir/transmitted", originalMessage.c_str(), true);
         }
     });
 }
@@ -123,7 +138,12 @@ bool MQTTManager::tryConnect(const String& clientId, const String& willTopic) {
 void MQTTManager::onConnected() {
     state = 0;
     firstConnect = true;
-    subscribe("ir/transmitted");
+    subscribe("ir/transmitted/set");
     publish("status", "online", true);
+
+    // Публикуем формат ожидаемого сообщения
+    const char* format_help = "Expected format: {\"protocol\":\"NEC|RC5|RC6|SAMSUNG\",\"value\":\"0xFFFFFFFF\",\"bits\":32}";
+    publish("ir/transmitted/format", format_help, true);
+
     Serial.println("MQTT: Connected successfully");
 }
