@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WiMote - WiFi Scanner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --primary-color: #00a8ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .nav-buttons {
+            display: none; /* Скрываем навигационные кнопки */
+        }
+
+        .nav-button {
+            background: #3d3d3d;
+            color: var(--text-color);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: var(--primary-color);
+        }
+
+        .btn-scan {
+            display: none;
+        }
+
+        .networks-list {
+            margin-top: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .network-item {
+            display: grid;
+            grid-template-columns: 2fr 0.7fr 0.7fr 0.7fr 1.5fr;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .network-item.header {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .best-channels {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+
+        .best-channels h2 {
+            color: var(--primary-color);
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .channel-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .channel-stats {
+            opacity: 0.8;
+            color: var(--text-color);
+        }
+
+        .channel-stats.clear {
+            color: #ffffff; /* Чисто белый цвет */
+            opacity: 1; /* Полная непрозрачность */
+            font-weight: 500;
+            text-shadow: 0 0 2px rgba(0,0,0,0.3); /* Добавляем легкую тень для лучшей читаемости */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <a href="/" class="nav-button">Setup</a>
+            <a href="#" class="nav-button active">Scanner</a>
+        </div>
+        <h1>WiFi Scanner</h1>
+        <div id="channelChart" style="width:100%; height:650px;"></div>
+
+        <!-- Добавляем секцию для отображения лучших каналов -->
+        <div class="best-channels" id="bestChannelsSection" style="display: none;">
+            <h2>Best Channels</h2>
+            <div id="bestChannelsList"></div>
+        </div>
+
+        <div class="networks-list">
+            <div class="network-item header">
+                <div>SSID</div>
+                <div>Channel</div>
+                <div>Width</div>
+                <div>RSSI</div>
+                <div>BSSID</div>
+            </div>
+            <div id="networksList"></div>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+        let isScanning = false;
+        let lastNetworks = '';
+        let charts = null; // Добавляем переменную для хранения графиков
+        let isPageActive = false; // Добавляем флаг активности страницы
+        let networkColors = new Map(); // Добавляем хранилище цветов для сетей
+        let networksCache = new Map(); // ключ: BSSID, значение: {network, missedScans}
+
+        function getNetworkColor(ssid) {
+            if (!networkColors.has(ssid)) {
+                networkColors.set(ssid, `hsl(${Math.random() * 360}, 70%, 50%)`);
+            }
+            return networkColors.get(ssid);
+        }
+
+        function initCharts() {
+            if (charts) return;
+
+            const layout = {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#e0e0e0' },
+                showlegend: true,
+                margin: { t: 30, b: 50, l: 70, r: 50 }, // Увеличиваем левый отступ с 50 до 70
+                height: 650 // Явно задаем высоту
+            };
+
+            // Инициализируем только один график для каналов
+            Plotly.newPlot('channelChart', [], {
+                ...layout,
+                margin: { t: 50, b: 50, l: 50, r: 50 }, // Добавляем отступы
+                title: 'WiFi Networks by Channel',
+                xaxis: {
+                    title: 'Channel',
+                    gridcolor: '#444',
+                    range: [0, 14],
+                    dtick: 1
+                },
+                yaxis: {
+                    title: 'Signal Strength',
+                    gridcolor: '#444',
+                    range: [-0.1, 1.1],
+                    tickformat: '%',
+                    ticktext: ['-100 dBm', '-85 dBm', '-70 dBm', '-55 dBm', '-40 dBm'],
+                    tickvals: [0, 0.25, 0.5, 0.75, 1]
+                }
+            });
+
+            charts = true;
+        }
+
+        function updateCharts(networks) {
+            const traces = networks.map(net => {
+                const chWidth = net.chwidth || 20;
+                const baseHalfWidth = chWidth / 20;
+                const normalizedRSSI = (net.rssi + 100) / 70;
+                const color = getNetworkColor(net.ssid);
+
+                // Создаем массивы точек для сужающегося контура
+                const x = [];
+                const y = [];
+
+                // Нижняя часть (полная ширина)
+                x.push(net.channel - baseHalfWidth);
+                y.push(0);
+
+                // Левая сторона (сужающаяся)
+                const points = 10; // Количество точек для плавности
+                for(let i = 1; i < points; i++) {
+                    const heightFactor = i / points;
+                    const currentWidth = baseHalfWidth * (1 - heightFactor * 0.3); // Сужение на 30%
+                    x.push(net.channel - currentWidth);
+                    y.push(heightFactor * normalizedRSSI);
+                }
+
+                // Верхняя точка
+                x.push(net.channel - baseHalfWidth * 0.7); // Сужение на 30%
+                y.push(normalizedRSSI);
+                x.push(net.channel + baseHalfWidth * 0.7);
+                y.push(normalizedRSSI);
+
+                // Правая сторона (сужающаяся)
+                for(let i = points - 1; i > 0; i--) {
+                    const heightFactor = i / points;
+                    const currentWidth = baseHalfWidth * (1 - heightFactor * 0.3);
+                    x.push(net.channel + currentWidth);
+                    y.push(heightFactor * normalizedRSSI);
+                }
+
+                // Замыкаем контур
+                x.push(net.channel + baseHalfWidth);
+                y.push(0);
+                x.push(net.channel - baseHalfWidth);
+                y.push(0);
+
+                return {
+                    x: x,
+                    y: y,
+                    mode: 'lines',
+                    fill: 'toself',
+                    fillcolor: color.replace('hsl', 'hsla').replace(')', ', 0.3)'), // Уменьшаем непрозрачность с 0.6 до 0.3
+                    line: {
+                        color: color,
+                        width: 2
+                    },
+                    name: net.ssid,
+                    hoverinfo: 'text',
+                    text: `${net.ssid}<br>Ch ${net.channel}, ${chWidth}MHz<br>RSSI: ${net.rssi} dBm`
+                };
+            });
+
+            Plotly.newPlot('channelChart', traces, {
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#e0e0e0' },
+                showlegend: true,
+                legend: {
+                    bgcolor: 'rgba(0,0,0,0.3)',
+                    bordercolor: 'rgba(255,255,255,0.2)',
+                    borderwidth: 1
+                },
+                title: 'Networks per Channel',
+                xaxis: {
+                    title: 'Channel',
+                    gridcolor: '#444',
+                    range: [0, 14],
+                    dtick: 1
+                },
+                yaxis: {
+                    title: 'Signal Strength',
+                    gridcolor: '#444',
+                    range: [-0.1, 1.1],
+                    tickformat: '%',
+                    ticktext: ['-100 dBm', '-85 dBm', '-70 dBm', '-55 dBm', '-40 dBm'],
+                    tickvals: [0, 0.25, 0.5, 0.75, 1]
+                }
+            });
+        }
+
+        async function updateData() {
+            if(isScanning) return;
+            isScanning = true;
+
+            try {
+                const response = await fetch('/scan?_=' + Date.now());
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if(data.networks && Array.isArray(data.networks)) {
+                    // Обновляем кэш и получаем актуальные сети
+                    const currentBSSIDs = new Set(data.networks.map(net => net.bssid));
+
+                    // Обновляем счетчики пропущенных сканирований
+                    for(let [bssid, cached] of networksCache) {
+                        if(!currentBSSIDs.has(bssid)) {
+                            cached.missedScans++;
+                            if(cached.missedScans > 3) {
+                                networksCache.delete(bssid);
+                            }
+                        }
+                    }
+
+                    // Обновляем информацию о сетях в кэше
+                    data.networks.forEach(network => {
+                        networksCache.set(network.bssid, {
+                            network: network,
+                            missedScans: 0
+                        });
+                    });
+
+                    // Получаем все активные сети из кэша
+                    const allNetworks = Array.from(networksCache.values())
+                        .map(item => item.network);
+
+                    // Обновляем отображение
+                    console.log('Updating with networks:', allNetworks.length);
+                    updateCharts(allNetworks);
+                    updateNetworksList(allNetworks);
+                    updateBestChannels(data);
+
+                    lastNetworks = JSON.stringify(allNetworks);
+                }
+            } catch(error) {
+                console.error('Scan failed:', error);
+            } finally {
+                isScanning = false;
+            }
+        }
+
+        function updateNetworksList(networks) {
+            const list = document.getElementById('networksList');
+            if (!list) {
+                console.error('Networks list element not found!');
+                return;
+            }
+
+            const html = networks
+                .sort((a, b) => b.rssi - a.rssi)
+                .map(net => {
+                    const cached = networksCache.get(net.bssid);
+                    const opacity = cached ?
+                        Math.max(0.3, 1 - (cached.missedScans * 0.2)) : 1;
+
+                    return `
+                        <div class="network-item" style="opacity: ${opacity}">
+                            <div>${net.ssid || 'Unknown'}</div>
+                            <div>${net.channel}</div>
+                            <div>${net.chwidth} MHz</div>
+                            <div>${net.rssi} dBm</div>
+                            <div>${net.bssid}</div>
+                        </div>
+                    `;
+                })
+                .join('');
+
+            list.innerHTML = html;
+        }
+
+        function updateBestChannels(networks) {
+            const section = document.getElementById('bestChannelsSection');
+            const list = document.getElementById('bestChannelsList');
+
+            if(!list || !networks.channels || !networks.channels.best || networks.channels.best.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            const html = networks.channels.best.map(ch => {
+                const isClear = ch.networks === 0;
+                const statsClass = isClear ? 'channel-stats clear' : 'channel-stats';
+                const noiseText = isClear ? 'Noise: Clear' : `Noise: ${ch.noise.toFixed(1)} dBm`;
+
+                return `
+                    <div class="channel-item">
+                        <span class="channel-number">${isClear ? '<span style="color: #ffffff">Channel ' + ch.channel + '</span>' : 'Channel ' + ch.channel}</span>
+                        <span class="${statsClass}">
+                            ${ch.networks} networks,
+                            ${noiseText}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+
+            list.innerHTML = html;
+            section.style.display = 'block';
+        }
+
+        function stopScanning() {
+            if(updateInterval) {
+                clearInterval(updateInterval);
+
+                updateInterval = null;
+            }
+            isScanning = false;
+        }
+
+        function startScan() {
+            if(!isPageActive) return;
+
+            if(updateInterval) {
+                clearInterval(updateInterval);
+            }
+
+            updateData();
+            updateInterval = setInterval(() => {
+                if(isPageActive) {
+                    updateData();
+                }
+            }, 3000);
+        }
+
+        // Инициализация при загрузке страницы
+        window.addEventListener('load', () => {
+            console.log('Page loaded, initializing scanner...');
+            initCharts();
+            isPageActive = true;
+            startScan();
+        });
+
+        // Управление сканированием при переключении вкладок
+        document.addEventListener('visibilitychange', () => {
+            isPageActive = !document.hidden;
+            console.log('Page visibility changed:', isPageActive ? 'active' : 'inactive');
+
+            if (isPageActive) {
+                console.log('Resuming scan...');
+                initCharts();
+                startScan();
+            } else {
+                console.log('Stopping scan...');
+                stopScanning();
+            }
+        });
+
+        // Остановка сканирования при уходе со страницы
+        window.addEventListener('unload', () => {
+            isPageActive = false;
+            stopScanning();
+            networkColors.clear();
+            networksCache.clear(); // Очищаем кэш сетей
+        });
+
+        // Проверяем, находимся ли мы в режиме Captive Portal
+        function checkCaptivePortal() {
+            const host = window.location.hostname;
+            const isCaptivePortal = host === '192.168.4.1' || host.includes('.portal');
+
+            if(isCaptivePortal) {
+                window.location.href = '/'; // Редирект на страницу настроек
+                return;
+            }
+
+            document.querySelector('.nav-buttons').style.display = 'flex';
+        }
+
+        // Вызываем проверку при загрузке страницы
+        window.addEventListener('load', checkCaptivePortal);
+    </script>
+</body>
+</html>

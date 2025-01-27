@@ -2,50 +2,52 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 
-struct JsonConfigLog
-{
-  bool enable_serial_logs = false;
+struct PowerConfig {
+    int target_rssi;
+    int min_power;
+    int max_power;
+
+    PowerConfig() :
+        target_rssi(-60),
+        min_power(40),
+        max_power(84) {}
 };
 
-struct Config
-{
-  struct
-  {
+struct WifiConfig {
     String ssid;
     String password;
-  } wifi;
+    String hostname;
+    uint32_t connect_timeout;
+    PowerConfig power;
+    int channel_width;
+    int channel; // Добавлено поле channel
+    bool power_save;
+    bool auto_reconnect;
 
-  struct
-  {
-    String server;
-    int timezone;
-    int update_interval;
-  } ntp;
-
-  struct
-  {
-    int json_size = 2048;
-    int logger_stack = 4096;
-    int wifi_stack = 4096;
-    int task_stack = 2048;
-  } system;
-
-  struct
-  {
-    String clientID;
-    String host;
-    int port;
-    String user;
-    String password;
-    String base_topic; // Изменено с topic на base_topic
-  } mqtt;
+    WifiConfig() :
+        ssid(""),
+        password(""),
+        hostname("WiMote"),
+        connect_timeout(30000),
+        channel_width(20),
+        channel(1), // Инициализация поля channel
+        power_save(false),
+        auto_reconnect(false) {}
 };
 
-extern StaticJsonDocument<2048> globalDoc;
-extern Config config;
-extern JsonConfigLog logConfig;
-bool loadConfig();
-bool resetWiFiConfig();
-bool resetMQTTConfig();
-bool resetNTPConfig();
-bool resetAllConfig();
+class Config {
+private:
+    static Config* _instance;
+    String _name;      // Изменено с const char* на String
+    WifiConfig _wifi;
+
+    Config();
+
+public:
+    static bool init();
+    static Config& instance(); // Изменено на неконстантную ссылку
+    const char* getName() const;
+    const WifiConfig& getWifi() const;
+    void setWifi(const WifiConfig& cfg); // Добавлен метод setWifi
+    bool save(); // Добавлен метод save
+};

@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WiMote - WiFi Configuration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --input-bg: #3d3d3d;
+            --input-border: #4d4d4d;
+            --primary-color: #00a8ff;
+            --primary-hover: #0088cc;
+            --error-color: #ff4757;
+            --success-color: #2ed573;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        /* Скрываем стрелки в числовых полях */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 168, 255, 0.2);
+        }
+
+        .advanced-toggle {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-align: center;
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 6px;
+            background: var(--input-bg);
+            transition: all 0.3s ease;
+        }
+
+        .advanced-toggle:hover {
+            background: var(--input-border);
+        }
+
+        .advanced-settings {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--input-border);
+            transition: all 0.3s ease;
+        }
+
+        .advanced-settings.hidden {
+            display: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .status.error {
+            background: var(--error-color);
+            display: block;
+        }
+
+        .status.success {
+            background: var(--success-color);
+            display: block;
+        }
+
+        .nav-buttons {
+            display: none; /* Скрываем навигационные кнопки */
+        }
+
+        .nav-button {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .nav-button:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Стили для кнопки сброса */
+        .reset-button {
+            background: #ff4757;
+            margin-top: 10px;
+        }
+
+        .reset-button:hover {
+            background: #ff2e38;
+        }
+
+        /* Стили для модального окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            margin: 0;
+            flex: 1;
+        }
+
+        .modal-buttons .cancel {
+            background: var(--input-bg);
+        }
+
+        .modal-buttons .cancel:hover {
+            background: var(--input-border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-buttons">
+            <a href="#" class="nav-button active">Setup</a>
+            <a href="/scanner" class="nav-button" id="scannerBtn">Scanner</a>
+        </div>
+        <h1>WiMote Setup</h1>
+        <form method="POST" action="/save" id="configForm">
+            <div class="form-group">
+                <label for="ssid">WiFi Network Name</label>
+                <input type="text" id="ssid" name="ssid" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password">
+            </div>
+
+            <div class="form-group">
+                <label for="hostname">Device Name</label>
+                <input type="text" id="hostname" name="hostname" placeholder="WiMote">
+            </div>
+
+            <div class="advanced-toggle" onclick="toggleAdvanced()">
+                Advanced Settings ▼
+            </div>
+
+            <div class="advanced-settings hidden" id="advancedSettings">
+                <div class="row">
+                    <div class="col">
+                        <label for="timeout">Connect Timeout (ms)</label>
+                        <input type="number" id="timeout" name="timeout" min="5000" max="60000" step="1000">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <label for="target_rssi">Target RSSI (dBm)</label>
+                        <input type="number" id="target_rssi" name="target_rssi" min="-90" max="-30">
+                    </div>
+                    <div class="col">
+                        <label for="channel_width">Channel Width</label>
+                        <select id="channel_width" name="channel_width">
+                            <option value="20">20 MHz</option>
+                            <option value="40">40 MHz</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <label for="min_power">Min Power (dBm)</label>
+                        <input type="number" id="min_power" name="min_power" min="2" max="21">
+                    </div>
+                    <div class="col">
+                        <label for="max_power">Max Power (dBm)</label>
+                        <input type="number" id="max_power" name="max_power" min="2" max="21">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="power_save" name="power_save">
+                        <label for="power_save">Enable Power Save Mode</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="auto_reconnect" name="auto_reconnect">
+                        <label for="auto_reconnect">Auto Reconnect</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit">Save & Connect</button>
+            <button type="button" class="reset-button" onclick="showResetModal()">Reset WiFi Settings</button>
+            <div id="status" class="status"></div>
+        </form>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">Confirm Reset</h2>
+            <p>Are you sure you want to delete WiFi credentials? This will clear the network name and password.</p>
+            <div class="modal-buttons">
+                <button class="cancel" onclick="hideResetModal()">Cancel</button>
+                <button class="reset-button" onclick="resetWiFiSettings()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAdvanced() {
+            const div = document.getElementById('advancedSettings');
+            div.classList.toggle('hidden');
+        }
+
+        document.getElementById('configForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            status.className = 'status';
+            status.textContent = 'Saving configuration...';
+
+            try {
+                const formData = new FormData(this);
+                // Добавляем отладочный вывод
+                for (let pair of formData.entries()) {
+                    console.log(pair[0] + ': ' + pair[1]);
+                }
+
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const text = await response.text();
+                console.log('Server response:', text);
+
+                status.className = 'status success';
+                status.textContent = 'Configuration saved. Device will reboot and try to connect...';
+
+                // Ждем дольше перед перезагрузкой
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 8000);
+
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                status.className = 'status error';
+                status.textContent = 'Failed to save settings: ' + error.message;
+            }
+        }
+
+        fetch('/settings')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(config => {
+                console.log('Received config:', config);
+                // Не показываем SSID если это example
+                document.getElementById('ssid').value = config.wifi.ssid === 'example' ? '' : (config.wifi.ssid || '');
+                // Не показываем пароль если это reset
+                document.getElementById('password').value = config.wifi.password === 'reset' ? '' : (config.wifi.password || '');
+                document.getElementById('hostname').value = config.wifi.hostname || 'WiMote';
+                document.getElementById('timeout').value = config.wifi.connect_timeout || 30000;
+                document.getElementById('target_rssi').value = config.wifi.power?.target_rssi || -60;
+                document.getElementById('min_power').value = (config.wifi.power?.min_power || 40)/4;
+                document.getElementById('max_power').value = (config.wifi.power?.max_power || 84)/4;
+                document.getElementById('channel_width').value = config.wifi.channel_width || 20;
+                document.getElementById('power_save').checked = config.wifi.power_save || false;
+                document.getElementById('auto_reconnect').checked = config.wifi.auto_reconnect || false;
+            })
+            .catch(error => {
+                console.error('Error loading settings:', error);
+                const status = document.getElementById('status');
+                status.className = 'status error';
+                status.textContent = 'Failed to load settings: ' + error.message;
+            });
+
+        // Функции для управления модальным окном
+        function showResetModal() {
+            document.getElementById('resetModal').style.display = 'block';
+        }
+
+        function hideResetModal() {
+            document.getElementById('resetModal').style.display = 'none';
+        }
+
+        // Функция для сброса настроек WiFi
+        async function resetWiFiSettings() {
+            const status = document.getElementById('status');
+            try {
+                // Создаем конфигурацию по умолчанию
+                const defaultConfig = {
+                    name: "WiMote",
+                    wifi: {
+                        ssid: "example",
+                        password: "reset",
+                        hostname: "WiMote",
+                        connect_timeout: 30000,
+                        power: {
+                            target_rssi: -60,
+                            min_power: 40,
+                            max_power: 84
+                        },
+                        channel_width: 20,
+                        power_save: false,
+                        auto_reconnect: true
+                    }
+                };
+
+                // Создаем FormData из конфигурации по умолчанию
+                const formData = new FormData();
+                Object.entries(defaultConfig.wifi).forEach(([key, value]) => {
+                    if (typeof value === 'object') {
+                        Object.entries(value).forEach(([subKey, subValue]) => {
+                            formData.append(`${key}_${subKey}`, subValue);
+                        });
+                    } else {
+                        formData.append(key, value);
+                    }
+                });
+
+                // Отправляем настройки
+                const saveResponse = await fetch('/save', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!saveResponse.ok) {
+                    throw new Error(`HTTP error! status: ${saveResponse.status}`);
+                }
+
+                // Очищаем поля формы
+                document.getElementById('ssid').value = '';
+                document.getElementById('password').value = '';
+
+                status.className = 'status success';
+                status.textContent = 'WiFi credentials reset to defaults. Device will restart...';
+
+                // Скрываем модальное окно
+                hideResetModal();
+
+                // Перезагружаем страницу через 5 секунд
+                setTimeout(() => {
+                    window.location.reload();
+                }, 5000);
+
+            } catch (error) {
+                console.error('Error resetting WiFi settings:', error);
+                status.className = 'status error';
+                status.textContent = 'Failed to reset WiFi settings: ' + error.message;
+                hideResetModal();
+            }
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('resetModal');
+            if (event.target == modal) {
+                hideResetModal();
+            }
+        }
+
+        // Проверяем, находимся ли мы в режиме Captive Portal
+
+        function checkCaptivePortal() {
+            const host = window.location.hostname;
+            const isCaptivePortal = host === '192.168.4.1' || host.includes('.portal');
+
+            // Показываем/скрываем навигационные кнопки
+            document.querySelector('.nav-buttons').style.display = isCaptivePortal ? 'none' : 'flex';
+
+            // Отключаем кнопку сканера в режиме портала
+            const scannerBtn = document.getElementById('scannerBtn');
+            if(scannerBtn) {
+                scannerBtn.style.pointerEvents = isCaptivePortal ? 'none' : 'auto';
+                scannerBtn.style.opacity = isCaptivePortal ? '0.5' : '1';
+            }
+        }
+
+        // Вызываем проверку при загрузке страницы
+        window.addEventListener('load', checkCaptivePortal);
+    </script>
+</body>
+</html>

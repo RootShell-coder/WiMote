@@ -1,0 +1,17 @@
+{
+  "name": "WiMote",
+  "wifi": {
+    "ssid": "example",
+    "password": "reset",
+    "hostname": "WiMote",
+    "connect_timeout": 30000,
+    "power": {
+      "target_rssi": -60,
+      "min_power": 40,
+      "max_power": 84
+    },
+    "channel_width": 20,
+    "power_save": false,
+    "auto_reconnect": true
+  }
+}

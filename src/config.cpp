@@ -1,155 +1,120 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <SPIFFS.h>
 #include "config.h"
+#include <FS.h>
+#include <LittleFS.h>
+#include <ArduinoJson.h>
 
-Config config;
-JsonConfigLog logConfig;
+#define SPIFFS LittleFS
 
-bool loadConfig() {
+Config* Config::_instance = nullptr;
 
-    if(!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS Mount Failed");
+Config::Config() :
+    _name("WiMote"),
+    _wifi() {}
+
+bool Config::init() {
+    if(_instance == nullptr) {
+        _instance = new Config();
+    }
+
+    if(!LittleFS.begin(true)) {
+        Serial.println("LittleFS Mount Failed");
         return false;
     }
 
-    if(!SPIFFS.exists("/config.json")) {
-        Serial.println("Config file not found");
-        return false;
-    }
-
-    File file = SPIFFS.open("/config.json", "r");
+    File file = LittleFS.open("/config/config.json", "r");
     if(!file) {
         Serial.println("Failed to open config file");
         return false;
     }
 
-    StaticJsonDocument<1024> doc;
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, file);
     file.close();
 
     if(error) {
-        Serial.printf("Config parse failed: %s\n", error.c_str());
+        Serial.println("Failed to parse config file");
         return false;
     }
 
-    JsonObject wifi = doc["wifi"];
-    if(wifi) {
-        config.wifi.ssid = wifi["ssid"] | config.wifi.ssid;
-        config.wifi.password = wifi["password"] | config.wifi.password;
+    if(doc["name"].is<const char*>()) {
+        _instance->_name = doc["name"].as<String>();
     }
 
-    JsonObject ntp = doc["ntp"];
-    if(ntp) {
-      const char *server = ntp["server"];
-      config.ntp.server = server;
-      config.ntp.timezone = ntp["timezone"] | config.ntp.timezone;
-      config.ntp.update_interval = ntp["update_interval"] | config.ntp.update_interval;
-    }
-
-    JsonObject sys = doc["system"];
-    if(sys) {
-        config.system.json_size = sys["json_size"] | config.system.json_size;
-        config.system.logger_stack = sys["logger_stack"] | config.system.logger_stack;
-        config.system.wifi_stack = sys["wifi_stack"] | config.system.wifi_stack;
-        config.system.task_stack = sys["task_stack"] | config.system.task_stack;
-    }
-
-    JsonObject mqtt = doc["mqtt"];
-    if(mqtt) {
-        config.mqtt.clientID = mqtt["clientID"] | config.mqtt.clientID;
-        config.mqtt.host = mqtt["host"] | config.mqtt.host;
-        config.mqtt.port = mqtt["port"] | config.mqtt.port;
-        config.mqtt.user = mqtt["user"] | config.mqtt.user;
-        config.mqtt.password = mqtt["password"] | config.mqtt.password;
-        config.mqtt.base_topic = mqtt["base_topic"] | config.mqtt.base_topic;
-
-        // Проверка, действительно ли host загружен
-        if(config.mqtt.host.isEmpty()) {
-            Serial.println("Error: MQTT host is empty. Check config.json.");
-            return false;
-        } else {
-            Serial.printf("MQTT host from config: %s\n", config.mqtt.host.c_str());
+    if(doc["wifi"].is<JsonObject>()) {
+        JsonObject wifi = doc["wifi"];
+        _instance->_wifi.ssid = wifi["ssid"].as<String>();
+        // Заменяем устаревший метод containsKey на современный синтаксис
+        if(wifi["password"].is<const char*>() && wifi["password"].as<String>().length() > 0) {
+            _instance->_wifi.password = wifi["password"].as<String>();
         }
+        _instance->_wifi.hostname = wifi["hostname"].as<String>();
+        _instance->_wifi.connect_timeout = wifi["connect_timeout"] | 30000;
+        _instance->_wifi.channel_width = wifi["channel_width"] | 20;
+        _instance->_wifi.power_save = wifi["power_save"] | false;
+        _instance->_wifi.auto_reconnect = wifi["auto_reconnect"] | false;
+
+        if(wifi["power"].is<JsonObject>()) {
+            JsonObject power = wifi["power"];
+            _instance->_wifi.power.target_rssi = power["target_rssi"] | -60;
+            _instance->_wifi.power.min_power = power["min_power"] | 40;
+            _instance->_wifi.power.max_power = power["max_power"] | 84;
+        }
+
+        Serial.printf("Loaded WiFi config - SSID: %s, Power: %d-%d dBm\n",
+            _instance->_wifi.ssid.c_str(),
+            _instance->_wifi.power.min_power/4,
+            _instance->_wifi.power.max_power/4);
     }
 
-    Serial.println("Configuration loaded successfully");
     return true;
 }
 
-bool resetWiFiConfig() {
-    StaticJsonDocument<1024> doc;
+Config& Config::instance() { // Изменено на неконстантную ссылку
+    if(_instance == nullptr) {
+        _instance = new Config();
+    }
+    return *_instance;
+}
 
-    // Читаем текущую конфигурацию
-    File file = SPIFFS.open("/config.json", "r");
-    if(file) {
-        DeserializationError error = deserializeJson(doc, file);
+const char* Config::getName() const {
+    return _name.c_str();
+}
+
+const WifiConfig& Config::getWifi() const {
+    return _wifi;
+}
+
+void Config::setWifi(const WifiConfig& cfg) {
+    _wifi = cfg;
+}
+
+bool Config::save() {
+    // Сохраняем конфигурацию в файл
+    File file = LittleFS.open("/config/config.json", "w");
+    if (!file) {
+        return false;
+    }
+
+    StaticJsonDocument<512> doc;
+    doc["name"] = "WiMote";
+    JsonObject wifi = doc.createNestedObject("wifi");
+    wifi["ssid"] = _wifi.ssid;
+    wifi["password"] = _wifi.password;
+    wifi["hostname"] = _wifi.hostname;
+    wifi["connect_timeout"] = _wifi.connect_timeout;
+    JsonObject power = wifi.createNestedObject("power");
+    power["target_rssi"] = _wifi.power.target_rssi;
+    power["min_power"] = _wifi.power.min_power;
+    power["max_power"] = _wifi.power.max_power;
+    wifi["channel_width"] = _wifi.channel_width;
+    wifi["channel"] = _wifi.channel;
+    wifi["power_save"] = _wifi.power_save;
+    wifi["auto_reconnect"] = _wifi.auto_reconnect;
+
+    if (serializeJsonPretty(doc, file) == 0) {
         file.close();
-        if(error) return false;
+        return false;
     }
-
-    // Удаляем секцию wifi если она есть
-    doc.remove("wifi");
-
-    // Сохраняем обновленную конфигурацию
-    file = SPIFFS.open("/config.json", "w");
-    if(!file) return false;
-
-    serializeJson(doc, file);
     file.close();
-    loadConfig();
-    return true;
-}
-
-bool resetMQTTConfig() {
-    StaticJsonDocument<1024> doc;
-
-    File file = SPIFFS.open("/config.json", "r");
-    if(file) {
-        DeserializationError error = deserializeJson(doc, file);
-        file.close();
-        if(error) return false;
-    }
-
-    doc.remove("mqtt");
-
-    file = SPIFFS.open("/config.json", "w");
-    if(!file) return false;
-
-    serializeJson(doc, file);
-    file.close();
-    loadConfig();
-    return true;
-}
-
-bool resetNTPConfig() {
-    StaticJsonDocument<1024> doc;
-
-    File file = SPIFFS.open("/config.json", "r");
-    if(file) {
-        DeserializationError error = deserializeJson(doc, file);
-        file.close();
-        if(error) return false;
-    }
-
-    doc.remove("ntp");
-
-    file = SPIFFS.open("/config.json", "w");
-    if(!file) return false;
-
-    serializeJson(doc, file);
-    file.close();
-    loadConfig();
-    return true;
-}
-
-bool resetAllConfig() {
-    File file = SPIFFS.open("/config.json", "w");
-    if(!file) return false;
-
-    StaticJsonDocument<1024> doc;
-    serializeJson(doc, file);
-    file.close();
-    loadConfig();
     return true;
 }
